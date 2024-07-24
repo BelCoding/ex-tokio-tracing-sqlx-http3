@@ -1,4 +1,4 @@
-INSERT INTO public."contacts" (id, email , number)
+INSERT INTO contacts_t (id, email , number)
 VALUES
     -- Create a list of emails instead of names for each contact
 

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS public.contacts(
+CREATE TABLE IF NOT EXISTS contacts_t (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
     number TEXT NOT NULL
