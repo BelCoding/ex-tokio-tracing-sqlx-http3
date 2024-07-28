@@ -81,11 +81,30 @@ impl PhoneHandler {
                         debug!("Sent the phone number to the channel.");
                     }
                 }
-                None => info!("No phone number found for {}", email),
+                None => {
+                    info!("No phone number found for {}", email);
+                    todo!(); // Some kind of NACK should be sent back to the client
+                }
             },
             Menu::Add(entry, _addr) => {
                 info!("Adding {} with number {}", entry.email, entry.number);
-                todo!();
+                // Inserting in database is fairly expensive, so we try only if the email is not in the list.
+                if self.accounts.contains(&entry.email) {
+                    error!("The email is already in the list!");
+                    todo!(); // Some kind of NACK should be sent back to the client
+                    return;
+                } else {
+                    self.accounts.insert(entry.email.clone());
+                    // We could insert at the first block and check the return value of insert,
+                    // instead of calling "contains", but it would require to clone every time.
+                }
+
+                if db.add_phone(&entry).await.is_none() {
+                    error!("Error adding the phone number to the database.");
+                    self.accounts.remove(&entry.email);
+                    todo!(); // Some kind of NACK should be sent back to the client
+                }
+                // TODO! // Some kind of ACK! should be sent back to the client to confirm the operation!
             }
         }
     }

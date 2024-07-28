@@ -77,6 +77,37 @@ impl Db {
         Some(emails)
     }
 
+    #[tracing::instrument]
+    pub async fn add_phone(&self, entry: &Entry) -> Option<()> {
+        // Get the connection and query the database for the phone number
+        let mut conn = self.acquire_db_connection().await?;
+
+        #[cfg(not(test))]
+        let res = sqlx::query!(
+            "INSERT INTO contacts (email, number) VALUES ($1, $2)",
+            entry.email.as_str(),
+            entry.number
+        );
+
+        #[cfg(test)]
+        let res = sqlx::query!(
+            "INSERT INTO contacts_t (email, number) VALUES ($1, $2)",
+            entry.email.as_str(),
+            entry.number
+        );
+
+        match res.execute(&mut *conn).await {
+            Ok(_) => {
+                debug!("Added the phone number to the database.");
+                Some(())
+            }
+            Err(e) => {
+                error!("Error adding phone number: {:?}", e);
+                None
+            }
+        }
+    }
+
     async fn acquire_db_connection(&self) -> Option<sqlx::pool::PoolConnection<Postgres>> {
         // Get the connection and query the database for the phone number
         match self.pool.acquire().await {
@@ -188,6 +219,31 @@ mod tests {
         assert!(res.is_some());
         let emails: EmailList = res.unwrap();
         assert_eq!(emails.len(), 5);
+        Ok(())
+    }
+
+    #[tracing::instrument]
+    #[sqlx::test(fixtures(
+        path = "../test-fixtures",
+        scripts("create-contacts.sql", "insert-contacts.sql")
+    ))]
+    async fn add_phone_test(pool: sqlx::PgPool) -> sqlx::Result<()> {
+        // use tracing::debug_span;
+        console_subscriber::init();
+        let db = tests_setup(pool);
+        let entry = Entry {
+            email: Email::from_str("peter@domain.com").unwrap(),
+            number: "456-789-0123".to_string(),
+        };
+
+        let res = db.add_phone(&entry).await;
+        assert!(res.is_some());
+        let res = db.request_all_email_accounts().await;
+        assert!(res.is_some());
+        let emails: EmailList = res.unwrap();
+        assert_eq!(emails.len(), 6);
+        // let res = db.add_phone(&entry).await;
+        // assert!(res.is_some());
         Ok(())
     }
 }
