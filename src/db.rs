@@ -29,13 +29,7 @@ impl Db {
     #[tracing::instrument]
     pub async fn request_phone(&self, email: &Email) -> Option<String> {
         // Get the connection and query the database for the phone number
-        let mut conn: sqlx::pool::PoolConnection<Postgres> = match self.pool.acquire().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Error: {:?}", e);
-                return None;
-            }
-        };
+        let mut conn = self.acquire_db_connection().await?;
 
         #[cfg(not(test))]
         let res = sqlx::query!("SELECT * FROM contacts WHERE email = $1", email.as_str())
@@ -60,14 +54,7 @@ impl Db {
     /// In case of failure returns None to the caller after printing the error to the trace.
     #[tracing::instrument]
     pub async fn request_all_email_accounts(&self) -> Option<EmailList> {
-        // Get the connection and query the database for the phone number
-        let mut conn: sqlx::pool::PoolConnection<Postgres> = match self.pool.acquire().await {
-            Ok(conn) => conn,
-            Err(e) => {
-                error!("Error: {:?}", e);
-                return None;
-            }
-        };
+        let mut conn = self.acquire_db_connection().await?;
 
         #[cfg(not(test))]
         let res: Result<Vec<Email>, _> = sqlx::query_as!(Email, "SELECT email FROM contacts")
@@ -88,6 +75,17 @@ impl Db {
         };
         debug!(?emails);
         Some(emails)
+    }
+
+    async fn acquire_db_connection(&self) -> Option<sqlx::pool::PoolConnection<Postgres>> {
+        // Get the connection and query the database for the phone number
+        match self.pool.acquire().await {
+            Ok(conn) => Some(conn),
+            Err(e) => {
+                error!("Error: {:?}", e);
+                None
+            }
+        }
     }
 }
 
