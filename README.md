@@ -15,15 +15,19 @@ Apart from the crates in Cargo.toml I did install the sqlx-cli:
 ```cargo search sqlx-cli```
 
 Notice that for the macros ```query!(...)``` to work the db table must be present at compile time. You can create it manually or easier with the sqlx-cli, after cloning the repo the scripts are in the migrations folder already so you just need to run:
+
 ```sqlx migrate run```
 
 
 ## Run
-env RUST_LOG=info cargo run --bin server
-env RUST_LOG=info cargo run --bin client
+```env RUST_LOG=info cargo run --bin server```
+
+```env RUST_LOG=info cargo run --bin client```
 
 Monitor the threads with tokio-console:
+
 ```cargo instal tokio-console```
+
 ```tokio-console```
 
 ## Test
