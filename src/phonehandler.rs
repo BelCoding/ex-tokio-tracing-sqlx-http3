@@ -2,7 +2,7 @@ use crate::db::*;
 use crate::types::*;
 use std::net::SocketAddr;
 use tokio::sync::mpsc;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
 /// An async PhoneHandler that can add and get phone numbers.
 /// The PhoneHandler is backed by a PostgreSQL database.
@@ -24,7 +24,7 @@ impl PhoneHandler {
         match db.request_all_email_accounts().await {
             Some(accounts) => Some(PhoneHandler { accounts }),
             None => {
-                info!("No email accounts found!");
+                warn!("No email accounts found!");
                 None
             }
         }
@@ -49,7 +49,7 @@ impl PhoneHandler {
                 while let Some(op) = inc_rx.recv().await {
                     self.handle_operation(op, &mut db, &out_tx).await;
                 }
-                info!("Channel disconnected!");
+                warn!("Channel disconnected!");
             });
 
         match j {
