@@ -76,11 +76,17 @@ pub enum Menu {
     // List, Or GetList?
 }
 
-/// Custom method to create a String from bytes and length
-pub fn from_n_bytes(bytes: [u8; 1024], len: usize) -> String {
-    String::from_utf8(bytes[..len].to_vec()).expect("Invalid UTF-8")
+pub trait BufferOperations {
+    fn from_n_bytes(bytes: [u8; 1024], len: usize) -> String;
+    fn into_bytes(value: Self) -> Vec<u8>;
 }
-/// Turn a String into bytes
-pub fn into_bytes(value: String) -> Vec<u8> {
-    value.as_bytes().to_vec()
+
+impl BufferOperations for String {
+    fn from_n_bytes(bytes: [u8; 1024], len: usize) -> String {
+        String::from_utf8(bytes[..len].to_vec()).expect("Invalid UTF-8")
+    }
+
+    fn into_bytes(value: Self) -> Vec<u8> {
+        value.as_bytes().to_vec()
+    }
 }
