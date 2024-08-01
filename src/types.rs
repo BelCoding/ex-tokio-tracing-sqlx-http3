@@ -69,6 +69,7 @@ pub struct Entry {
 }
 
 /// Menu type to handle the operations via channels.
+#[derive(Debug)]
 pub enum Menu {
     Add(Entry, SocketAddr),
     Get(Email, SocketAddr),

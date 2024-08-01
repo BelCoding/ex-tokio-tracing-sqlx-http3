@@ -19,7 +19,7 @@ pub struct PhoneHandler {
 impl PhoneHandler {
     /// Async constructor.
     /// Gets the list of email accounts from the database.
-    #[tracing::instrument]
+    #[tracing::instrument(name = "PhoneHandler::new")]
     pub async fn new(db: &Db) -> Option<PhoneHandler> {
         match db.request_all_email_accounts().await {
             Some(accounts) => Some(PhoneHandler { accounts }),
@@ -34,7 +34,7 @@ impl PhoneHandler {
     /// handle the operations in database and send the responses via out_tx.
     ///
     /// TODO! Add an usage code example
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self, db, inc_rx, out_tx))]
     pub async fn spawn_db_handler(
         mut self,
         mut db: Db,
@@ -65,6 +65,7 @@ impl PhoneHandler {
     }
 
     /// Handle the operation requested by the client.
+    #[tracing::instrument(skip(db, out_tx))]
     async fn handle_operation(
         &mut self,
         op: Menu,
@@ -91,7 +92,7 @@ impl PhoneHandler {
                 // Inserting in database is fairly expensive, so we try only if the email is not in the list.
                 if self.accounts.contains(&entry.email) {
                     error!("The email is already in the list!");
-                    todo!(); // Some kind of NACK should be sent back to the client
+                    // todo!(); // Some kind of NACK should be sent back to the client
                     return;
                 } else {
                     self.accounts.insert(entry.email.clone());

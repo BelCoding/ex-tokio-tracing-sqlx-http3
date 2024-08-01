@@ -10,7 +10,7 @@ pub struct Db {
 
 impl Db {
     /// Create a new database pool
-    #[tracing::instrument]
+    #[tracing::instrument(name = "Db::new")]
     pub async fn new() -> Result<Db, sqlx::Error> {
         // Connect to the database
         dotenvy::dotenv().expect("A .env file with DATABASE_URL is required.");
@@ -26,7 +26,7 @@ impl Db {
 
     /// Request the phone number for a given email address.
     /// In case of failure returns None to the caller after printing the error to the trace.
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     pub async fn request_phone(&self, email: &Email) -> Option<String> {
         // Get the connection and query the database for the phone number
         let mut conn = self.acquire_db_connection().await?;
@@ -52,7 +52,7 @@ impl Db {
 
     /// Get email accounts
     /// In case of failure returns None to the caller after printing the error to the trace.
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     pub async fn request_all_email_accounts(&self) -> Option<EmailList> {
         let mut conn = self.acquire_db_connection().await?;
 
@@ -77,7 +77,7 @@ impl Db {
         Some(emails)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(skip(self))]
     pub async fn add_phone(&self, entry: &Entry) -> Option<()> {
         // Get the connection and query the database for the phone number
         let mut conn = self.acquire_db_connection().await?;
