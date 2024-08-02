@@ -123,7 +123,6 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::FromStr;
     fn tests_setup(pool: sqlx::PgPool) -> Db {
         Db { pool }
     }
@@ -151,7 +150,7 @@ mod tests {
     ))]
     async fn read_bob_test(pool: sqlx::PgPool) -> sqlx::Result<()> {
         let mut conn: sqlx::pool::PoolConnection<Postgres> = pool.acquire().await?;
-        let mail: Email = Email::from_str("bob@domain.com").unwrap();
+        let mail: Email = "bob@domain.com".into();
         let res = sqlx::query_as!(
             Contact,
             "SELECT * FROM contacts_t WHERE email = $1",
@@ -177,7 +176,7 @@ mod tests {
     ))]
     async fn read_bob_number_test(pool: sqlx::PgPool) -> sqlx::Result<()> {
         let mut conn: sqlx::pool::PoolConnection<Postgres> = pool.acquire().await?;
-        let mail: Email = Email::from_str("bob@domain.com").unwrap();
+        let mail: Email = "bob@domain.com".into();
         let res = sqlx::query!(
             "SELECT number FROM contacts_t WHERE email = $1",
             mail.as_str()
@@ -202,7 +201,7 @@ mod tests {
     ))]
     async fn request_phone_charlie_test(pool: sqlx::PgPool) -> sqlx::Result<()> {
         let db = tests_setup(pool);
-        let mail: Email = Email::from_str("charlie@domain.com").unwrap();
+        let mail: Email = "charlie@domain.com".into();
         let res = db.request_phone(&mail).await;
         assert!(res.is_some());
         assert_eq!(res.unwrap(), format!("345-678-9012"));
@@ -232,7 +231,7 @@ mod tests {
         console_subscriber::init();
         let db = tests_setup(pool);
         let entry = Entry {
-            email: Email::from_str("peter@domain.com").unwrap(),
+            email: "peter@domain.com".into(),
             number: "456-789-0123".to_string(),
         };
 

@@ -1,13 +1,22 @@
 use std::net::SocketAddr;
 extern crate derive_more;
-use derive_more::{Display, From, FromStr};
+use derive_more::{Display, From};
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 
 /// Email type comes in handy for the SQL query_as!. It should support String features.
-#[derive(Clone, Debug, Display, PartialEq, Eq, PartialOrd, Ord, Hash, From, FromStr)]
+#[derive(Clone, Debug, Display, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
 pub struct Email {
     pub email: String,
+}
+
+impl From<&str> for Email {
+    #[inline]
+    fn from(original: &str) -> Email {
+        Email {
+            email: original.to_string(),
+        }
+    }
 }
 
 impl Deref for Email {
