@@ -18,6 +18,9 @@ Notice that for the macros ```query!(...)``` to work the db table must be presen
 
 ```sqlx migrate run```
 
+To drop tables:
+
+```sqlx migrate revert```
 
 ## Run
 ```env RUST_LOG=info cargo run --bin server```
