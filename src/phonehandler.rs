@@ -65,7 +65,7 @@ impl PhoneHandler {
     }
 
     /// Handle the operation requested by the client.
-    #[tracing::instrument(skip(db, out_tx))]
+    #[tracing::instrument(skip(self, db, out_tx))]
     async fn handle_operation(
         &mut self,
         op: Menu,
