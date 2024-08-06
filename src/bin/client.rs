@@ -25,7 +25,7 @@ struct Arguments {
         long = "many",
         required = false,
         num_args = 0,
-        help = "Perform a test with a series of many requests."
+        help = "Test scenario of sending a series of many requests from 2 clients."
     )]
     many: bool,
     #[arg(short = 'p', long = "dest-port", required = false)]
@@ -40,13 +40,20 @@ async fn main() {
     let args = Arguments::parse();
     debug!(?args.email, ?args.many, ?args.port, "Arguments parsed:");
 
-    let dest_port = args.port.unwrap_or(3001);
+    let dest_port = args.port.unwrap_or(3000); // Port is hardcoded to 3000 in the server as well.
+    let dest_addr = SocketAddr::from(([0, 0, 0, 0], dest_port));
     match (args.email, args.many) {
-        (Some(email), false) => send_request_to_server(email, dest_port).await,
+        (Some(email), false) => {
+            // To send one request for just this email we need just one socket.
+            let addr = SocketAddr::from(([0, 0, 0, 0], 0000)); // Will bind a random port for the sender.
+            let socket = UdpSocket::bind(addr).await.expect("Error binding socket");
+            debug!(?socket);
+            send_request_to_server(email, &socket, dest_addr).await
+        }
         // (Some(email), None) => send_request_to_server(email, dest_port).await,
         (None, true) => {
             // (None, Some(_)) => {
-            spawn_many_requests(dest_port).await;
+            spawn_many_requests(dest_addr).await;
         }
         _ => {
             error!("Invalid arguments");
@@ -54,37 +61,40 @@ async fn main() {
     }
 }
 
-async fn spawn_many_requests(dest_port: u16) {
+#[tracing::instrument]
+async fn spawn_many_requests(dest_addr: SocketAddr) {
     let emails: Vec<String> = get_emails_vec();
-    let emails_copy: Vec<String> = emails.iter().rev().cloned().collect();
-    let tot_requests = emails.len() + emails_copy.len();
+    let emails2: Vec<String> = emails.iter().rev().cloned().collect(); // Reverse the emails for the 2nd client, so they won't be sent in the same order.
+    let tot_requests = emails.len() + emails2.len(); // Just for debugging purposes.
+
+    // To send multiple requests, create 2 sockets like they were 2 different clients.
+    let addr = SocketAddr::from(([0, 0, 0, 0], 0000));
+    let socket = UdpSocket::bind(addr).await.expect("Error binding socket");
+    let addr2 = SocketAddr::from(([0, 0, 0, 0], 0000));
+    let socket2 = UdpSocket::bind(addr2).await.expect("Error binding socket2");
 
     let jh: tokio::task::JoinHandle<()> = tokio::spawn(async move {
         for e in emails {
-            send_request_to_server(e, dest_port).await;
+            send_request_to_server(e, &socket, dest_addr).await;
             sleep(Duration::from_millis(100));
         }
     });
 
     let jh2: tokio::task::JoinHandle<()> = tokio::spawn(async move {
-        for e in emails_copy {
-            send_request_to_server(e, dest_port).await;
+        for e in emails2 {
+            send_request_to_server(e, &socket2, dest_addr).await;
             sleep(Duration::from_millis(100));
         }
     });
 
-    jh.await.expect("Error in join handle");
-    jh2.await.expect("Error in join handle");
-    debug!("Tasks joined.");
     debug!(tot_requests, "Spawned tasks.");
+    jh.await.expect("Error in join handle");
+    jh2.await.expect("Error in join handle2");
+    debug!("Tasks joined.");
 }
 
-async fn send_request_to_server(email: String, dest_port: u16) {
-    // Set udp dest_addr for the server and bind
-    let addr = SocketAddr::from(([0, 0, 0, 0], 0000)); // Will bind a random port
-    let dest_addr = SocketAddr::from(([0, 0, 0, 0], dest_port));
-    let socket = UdpSocket::bind(addr).await.expect("Error binding socket");
-
+#[tracing::instrument]
+async fn send_request_to_server(email: String, socket: &UdpSocket, dest_addr: SocketAddr) {
     let len = socket.send_to(email.as_bytes(), dest_addr).await.unwrap();
     debug!("{:?} bytes sent", len);
 

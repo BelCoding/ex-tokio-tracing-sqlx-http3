@@ -25,7 +25,12 @@ To drop tables:
 ## Run
 ```env RUST_LOG=info cargo run --bin server```
 
-```env RUST_LOG=info cargo run --bin client```
+```env RUST_LOG=info cargo run --bin client -- --help```
+
+For example to trigger 2 clients, one client on each thread:
+
+```env RUST_LOG=info cargo run --bin client -- -m```
+
 
 Monitor the threads with tokio-console:
 

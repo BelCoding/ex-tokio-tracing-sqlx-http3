@@ -53,6 +53,7 @@ async fn main() {
         return;
     };
 
+    debug!("Waiting for the join handlers...");
     // Check the join handlers and close the socket if any of them is interrupted.
     tokio::select! {
         _ = join_db_handler => {
