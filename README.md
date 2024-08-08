@@ -39,4 +39,4 @@ Monitor the threads with tokio-console:
 ```tokio-console```
 
 ## Test
-cargo test
+```cargo test```
